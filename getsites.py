@@ -110,15 +110,15 @@ def readtable(cnx, table):
 
 def main(url):
     
-    text = req2text(url)
-    category = extract_topic.main(text)
-    # db open
-    cnx = dbconnect()
-    cursor = cnx.cursor()
-    sql="INSERT INTO `sites` (`url`, `text`, `category`) VALUES (%s, %s, %s)"
-    writedb(cursor, cnx, sql, url, text, category)
+    # text = req2text(url)
+    # category = extract_topic.main(text)
+    # # db open
+    # cnx = dbconnect()
+    # cursor = cnx.cursor()
+    # sql="INSERT INTO `sites` (`url`, `text`, `category`) VALUES (%s, %s, %s)"
+    # writedb(cursor, cnx, sql, url, text, category)
 
-    cnx.close()
+    # cnx.close()
 
 if __name__ == "__main__":
     main(URL)
