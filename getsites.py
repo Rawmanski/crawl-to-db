@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 """
-Script for simple data writing and reading to/from MySQL.
+Script for crawling data from a given url and writing to DB.
+With extract_topic also categorizing the text.
+extract_topic is a text classifier (https://github.com/BWCommand286/text_classifier)
 
 """
 import pymysql
