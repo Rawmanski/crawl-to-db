@@ -1,50 +1,103 @@
 #! /usr/bin/env python3
+"""
+Script for simple data writing and reading to/from MySQL.
 
-from typing import ContextManager
-import requests
-import pymysql.cursors
+"""
+import pymysql
+from pymysql import cursors
 
+import extract_topic
 
 from bs4 import BeautifulSoup
+from urllib.request import urlopen
 
-
+INPUT_FILE = ''
 URL_LIST = []
 
-# Text extraction from html
 def req2text(url):
-    res = requests.get(url)
-    html_page = res.content
-    soup = BeautifulSoup(html_page, 'html.parser')
-    text = soup.find_all(text=True)
+    """ Returns parsed text from a given url
+
+    Parameters
+    ----------
+    url : str
+        url to parse
+        
+    Return
+    ------
+    text : str    
+    """
+    res = urlopen(url).read()
+    soup = BeautifulSoup(res, 'html.parser')
+    for script in soup(["script", "style"]):
+        script.decompose()
+    liste = list(soup.stripped_strings)
+    space = ' '
+    text = space.join(liste)
     return text
 
 
 def dbconnect():
+    """ Returns db connection
+    Configure for your needs with db credentials
+            
+    Return
+    ------
+    cnx : Connection object    
+    """
     cnx = pymysql.connect(
-    host="192.168.33.10",
-    user="testuser",
-    password="test123",
-    database="TESTDB",
+    host="",
+    user="",
+    password="",
+    database="",
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 ) 
-
     return cnx
 
  
+def writedb(cursor, cnx, sql_statment, val1, val2, val3):
+    """ Write to DB 
 
-# write to db
-def writedb(cursor, cnx, sql_statment, val1, val2):
+    Parameters
+    ----------
+    cursor : Cursor Object 
+        (pymysql.cursors.Cursor())
+    cnx    : Connection Object 
+        database connection (pymysql.connection.Connction())
+    sql_statement: str
+        SQL Expression to execute
+    url    : str
+        Given url which is parsed
+    text    : str
+        parsed text
+    category    : str
+        processed category 
+   
+    """
     try:
-        cursor.execute(sql_statment, (val1, val2))
+        cursor.execute(sql_statment, (val1, val2, val3))
         cnx.commit()
     except:
         cnx.rollback()
     
 
 
-# fetch whole table from db
+
 def readtable(cnx, table):
+    """ Returns fetched rows from DB
+
+    Parameters
+    ----------
+    cnx    : Connection Object 
+        database connection (pymysql.connection.Connction())
+    table: str
+        which table to    
+        
+    Return
+    ------
+    rows : list 
+        all rows from selected table    
+    """
     cursor = cnx.cursor()
     sql_statement = "SELECT * FROM id=%s"
     cursor.execute(sql_statement, table)
@@ -53,23 +106,17 @@ def readtable(cnx, table):
 
 
 
-def main():
+def main(url):
+    
+    text = req2text(url)
+    category = extract_topic.main(text)
+    # db open
     cnx = dbconnect()
-  
-    #
-    #  where the magic happens
-    # 
-    #     
-
-    #writedb(cnx.cursor, cnx, s,url, text)
-    mycursor = cnx.cursor()
-    mycursor.execute("SELECT * FROM `sites`")
-    wholetable =  mycursor.fetchall()
-    for x in wholetable:
-        print(x['id'], x['url'],x['category'])
-        
+    cursor = cnx.cursor()
+    sql="INSERT INTO `sites` (`url`, `text`, `category`) VALUES (%s, %s, %s)"
+    writedb(cursor, cnx, sql, url, text, category)
 
     cnx.close()
 
 if __name__ == "__main__":
-    main()
+    main(URL)
